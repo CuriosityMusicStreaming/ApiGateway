@@ -1,0 +1,27 @@
+syntax = "proto3";
+package contentservice;
+
+import "google/api/annotations.proto";
+
+service ContentService {
+    rpc AddContent (AddContentRequest) returns (AddContentResponse) {
+        option (google.api.http) = {
+            post: "/api/cs/v1/add-content"
+            body: "*"
+        };
+    }
+}
+
+message AddContentRequest {
+    string Name = 1;
+    ContentType Type = 2;
+}
+
+message AddContentResponse {
+    string Name = 1;
+}
+
+enum ContentType {
+    Song = 0;
+    Podcast = 1;
+}
