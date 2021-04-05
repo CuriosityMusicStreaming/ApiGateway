@@ -1,6 +1,7 @@
 package transport
 
 import (
+	"fmt"
 	logger "github.com/sirupsen/logrus"
 	"net/http"
 	"time"
@@ -8,13 +9,13 @@ import (
 
 func NewLoggingMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		now := time.Now()
+		start := time.Now()
 		h.ServeHTTP(writer, request)
 
 		logger.WithFields(logger.Fields{
-			"duration": time.Since(now),
+			"duration": fmt.Sprintf("%v", time.Since(start)),
 			"method":   request.Method,
-			"url":      request.URL,
+			"url":      request.RequestURI,
 		}).Info("request finished")
 	})
 }
