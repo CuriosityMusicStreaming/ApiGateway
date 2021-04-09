@@ -1,8 +1,8 @@
 package transport
 
 import (
-	"apigateway/pkg/common/infrastructure/logging/activity"
 	"context"
+	"github.com/CuriosityMusicStreaming/ComponentsPool/pkg/infrastructure/activity"
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	logger "github.com/sirupsen/logrus"

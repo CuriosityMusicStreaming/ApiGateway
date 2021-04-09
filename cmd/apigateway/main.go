@@ -3,8 +3,8 @@ package main
 import (
 	contentserviceapi "apigateway/api/contentservice"
 	"apigateway/pkg/apigateway/infrastructure/transport"
-	"apigateway/pkg/common/infrastructure/server"
 	"context"
+	"github.com/CuriosityMusicStreaming/ComponentsPool/pkg/infrastructure/server"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"google.golang.org/grpc"
 	"io"
