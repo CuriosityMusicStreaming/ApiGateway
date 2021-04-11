@@ -2,6 +2,7 @@ package main
 
 import (
 	contentserviceapi "apigateway/api/contentservice"
+	userserviceapi "apigateway/api/userservice"
 	"apigateway/pkg/apigateway/infrastructure/transport"
 	"context"
 	"github.com/CuriosityMusicStreaming/ComponentsPool/pkg/infrastructure/server"
@@ -57,13 +58,13 @@ func runService(config *config) error {
 			}).Methods(http.MethodGet)
 
 			grpcProxy := transport.NewGRPCProxy(router)
-			err := grpcProxy.RegisterConfiguration(
-				config.ContentServiceGRPCAddress,
-				"/api/cs/",
-				func(mux *runtime.ServeMux, conn *grpc.ClientConn) error {
-					return contentserviceapi.RegisterContentServiceHandler(ctx, mux, conn)
-				},
-			)
+
+			err := registerContentService(ctx, grpcProxy, config)
+			if err != nil {
+				return err
+			}
+
+			err = registerUserService(ctx, grpcProxy, config)
 			if err != nil {
 				return err
 			}
@@ -94,4 +95,24 @@ func listenForKillSignal(stopChan chan<- struct{}) {
 		<-ch
 		stopChan <- struct{}{}
 	}()
+}
+
+func registerContentService(ctx context.Context, proxy transport.GRPCProxy, config *config) error {
+	return proxy.RegisterConfiguration(
+		config.ContentServiceGRPCAddress,
+		"/api/cs/",
+		func(mux *runtime.ServeMux, conn *grpc.ClientConn) error {
+			return contentserviceapi.RegisterContentServiceHandler(ctx, mux, conn)
+		},
+	)
+}
+
+func registerUserService(ctx context.Context, proxy transport.GRPCProxy, config *config) error {
+	return proxy.RegisterConfiguration(
+		config.UserServiceGRPCAddress,
+		"/api/us/",
+		func(mux *runtime.ServeMux, conn *grpc.ClientConn) error {
+			return userserviceapi.RegisterUserServiceHandler(ctx, mux, conn)
+		},
+	)
 }

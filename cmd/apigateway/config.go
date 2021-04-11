@@ -16,4 +16,5 @@ func parseEnv() (*config, error) {
 type config struct {
 	ServeRESTAddress          string `envconfig:"serve_rest_address" default:":8001"`
 	ContentServiceGRPCAddress string `envconfig:"content_service_grpc_address"`
+	UserServiceGRPCAddress    string `envconfig:"user_service_grpc_address"`
 }
