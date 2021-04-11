@@ -1,7 +1,8 @@
 export APP_CMD_NAME = apigateway
+export REGISTRY = vadimmakerov/music-streaming
 export APP_PROTO_FILES = \
 	api/contentservice/contentservice.proto
-export DOCKER_IMAGE_NAME = vadimmakerov/$(APP_CMD_NAME):master
+export DOCKER_IMAGE_NAME = $(REGISTRY)-$(APP_CMD_NAME):master
 
 all: build check test
 
