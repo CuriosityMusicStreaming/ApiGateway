@@ -45,14 +45,20 @@ elif [ ! -f "$1" ]; then
     exit 1
 fi
 
-PROTO_DIR=$(dirname "$1")
-PROTO_NAME=$(basename "$1")
-echo_call protoc \
-    "-I/usr/include" \
-    "-I${GOPATH}/src" \
-    "-I${GPRC_GATEWAY_DIR}/third_party/googleapis" \
-    "-I${PROTO_DIR}" \
-    "--go_out=plugins=grpc:${PROTO_DIR}" \
-    "--grpc-gateway_out=logtostderr=true:${PROTO_DIR}" \
-    "--swagger_out=logtostderr=true:${PROTO_DIR}" \
-    "${PROTO_DIR}/${PROTO_NAME}"
+generate_proto() {
+    PROTO_DIR=$(dirname "$1")
+    PROTO_NAME=$(basename "$1")
+    echo_call protoc \
+        "-I/usr/include" \
+        "-I${GOPATH}/src" \
+        "-I${GPRC_GATEWAY_DIR}/third_party/googleapis" \
+        "-I${PROTO_DIR}" \
+        "--go_out=plugins=grpc:${PROTO_DIR}" \
+        "--grpc-gateway_out=logtostderr=true:${PROTO_DIR}" \
+        "--swagger_out=logtostderr=true:${PROTO_DIR}" \
+        "${PROTO_DIR}/${PROTO_NAME}"
+}
+
+for PROTO_PATH in "$@"; do
+    generate_proto "$PROTO_PATH"
+done
