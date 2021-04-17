@@ -1,6 +1,7 @@
 export APP_CMD_NAME = apigateway
 export REGISTRY = vadimmakerov/music-streaming
 export APP_PROTO_FILES = \
+	api/apigateway/apigateway.proto \
 	api/contentservice/contentservice.proto \
 	api/userservice/userservice.proto
 export DOCKER_IMAGE_NAME = $(REGISTRY)-$(APP_CMD_NAME):master

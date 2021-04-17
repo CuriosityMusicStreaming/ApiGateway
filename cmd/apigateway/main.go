@@ -1,14 +1,19 @@
 package main
 
 import (
+	"apigateway/api/apigateway"
 	contentserviceapi "apigateway/api/contentservice"
 	userserviceapi "apigateway/api/userservice"
 	"apigateway/pkg/apigateway/infrastructure/transport"
+	"apigateway/pkg/apigateway/infrastructure/transport/apiserver"
 	"context"
+	log "github.com/CuriosityMusicStreaming/ComponentsPool/pkg/app/logger"
+	jsonlog "github.com/CuriosityMusicStreaming/ComponentsPool/pkg/infrastructure/logger"
 	"github.com/CuriosityMusicStreaming/ComponentsPool/pkg/infrastructure/server"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"google.golang.org/grpc"
 	"io"
+	stdlog "log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -16,32 +21,48 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	logger "github.com/sirupsen/logrus"
 )
 
 var appID = "UNKNOWN"
 
 func main() {
-	logger.SetFormatter(&logger.JSONFormatter{})
+	logger, err := initLogger()
+	if err != nil {
+		stdlog.Fatal("failed to initialize logger")
+	}
 
 	config, err := parseEnv()
 	if err != nil {
-		logger.Fatal(err)
+		logger.FatalError(err)
 	}
 
-	err = runService(config)
+	err = runService(config, logger)
 	if err == server.ErrStopped {
 		logger.Info("service is successfully stopped")
 	} else if err != nil {
-		logger.Fatal(err)
+		logger.FatalError(err)
 	}
 }
 
-func runService(config *config) error {
+func runService(config *config, logger log.MainLogger) error {
 	stopChan := make(chan struct{})
 	listenForKillSignal(stopChan)
 
 	serverHub := server.NewHub(stopChan)
+
+	apiServer, err := initApiServer(config)
+	if err != nil {
+		return err
+	}
+
+	baseServer := grpc.NewServer(grpc.UnaryInterceptor(transport.NewLoggerServerInterceptor(logger)))
+	apigateway.RegisterApiGatewayServer(baseServer, apiServer)
+
+	serverHub.AddServer(server.NewGrpcServer(
+		baseServer,
+		server.GrpcServerConfig{ServeAddress: config.ServeGRPCAddress},
+		logger,
+	))
 
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
@@ -49,7 +70,15 @@ func runService(config *config) error {
 
 	serverHub.AddServer(&server.FuncServer{
 		ServeImpl: func() error {
+			grpcGatewayMux := runtime.NewServeMux()
+			opts := []grpc.DialOption{grpc.WithInsecure()}
+			err := apigateway.RegisterApiGatewayHandlerFromEndpoint(ctx, grpcGatewayMux, config.ServeGRPCAddress, opts)
+			if err != nil {
+				return err
+			}
+
 			router := mux.NewRouter()
+			router.PathPrefix("/api/").Handler(grpcGatewayMux)
 
 			// Implement healthcheck for Kubernetes
 			router.HandleFunc("/resilience/ready", func(w http.ResponseWriter, _ *http.Request) {
@@ -57,20 +86,8 @@ func runService(config *config) error {
 				_, _ = io.WriteString(w, http.StatusText(http.StatusOK))
 			}).Methods(http.MethodGet)
 
-			grpcProxy := transport.NewGRPCProxy(router)
-
-			err := registerContentService(ctx, grpcProxy, config)
-			if err != nil {
-				return err
-			}
-
-			err = registerUserService(ctx, grpcProxy, config)
-			if err != nil {
-				return err
-			}
-
 			httpServer = &http.Server{
-				Handler:      transport.NewLoggingMiddleware(grpcProxy),
+				Handler:      transport.NewLoggingMiddleware(router),
 				Addr:         config.ServeRESTAddress,
 				WriteTimeout: 15 * time.Second,
 				ReadTimeout:  15 * time.Second,
@@ -97,22 +114,42 @@ func listenForKillSignal(stopChan chan<- struct{}) {
 	}()
 }
 
-func registerContentService(ctx context.Context, proxy transport.GRPCProxy, config *config) error {
-	return proxy.RegisterConfiguration(
-		config.ContentServiceGRPCAddress,
-		"/api/cs/",
-		func(mux *runtime.ServeMux, conn *grpc.ClientConn) error {
-			return contentserviceapi.RegisterContentServiceHandler(ctx, mux, conn)
-		},
-	)
+func initLogger() (log.MainLogger, error) {
+	return jsonlog.NewLogger(&jsonlog.Config{AppName: appID}), nil
 }
 
-func registerUserService(ctx context.Context, proxy transport.GRPCProxy, config *config) error {
-	return proxy.RegisterConfiguration(
-		config.UserServiceGRPCAddress,
-		"/api/us/",
-		func(mux *runtime.ServeMux, conn *grpc.ClientConn) error {
-			return userserviceapi.RegisterUserServiceHandler(ctx, mux, conn)
-		},
-	)
+func initApiServer(config *config) (apigateway.ApiGatewayServer, error) {
+	opts := []grpc.DialOption{
+		grpc.WithInsecure(),
+	}
+
+	contentServiceClient, err := initContentServiceClient(opts, config)
+
+	userServiceClient, err := initUserServiceClient(opts, config)
+	if err != nil {
+		return nil, err
+	}
+
+	return apiserver.NewApiGatewayServer(
+		contentServiceClient,
+		userServiceClient,
+	), nil
+}
+
+func initContentServiceClient(commonOpts []grpc.DialOption, config *config) (contentserviceapi.ContentServiceClient, error) {
+	conn, err := grpc.Dial(config.ContentServiceGRPCAddress, commonOpts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return contentserviceapi.NewContentServiceClient(conn), nil
+}
+
+func initUserServiceClient(commonOpts []grpc.DialOption, config *config) (userserviceapi.UserServiceClient, error) {
+	conn, err := grpc.Dial(config.ContentServiceGRPCAddress, commonOpts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return userserviceapi.NewUserServiceClient(conn), nil
 }
