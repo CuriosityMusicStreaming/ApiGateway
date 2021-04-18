@@ -13,7 +13,7 @@ var (
 )
 
 func (server *apiGatewayServer) AddContent(ctx context.Context, req *apigateway.AddContentRequest) (*apigateway.AddContentResponse, error) {
-	userID, err := server.authenticateUser(ctx)
+	userToken, err := server.authenticateUser(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -28,17 +28,18 @@ func (server *apiGatewayServer) AddContent(ctx context.Context, req *apigateway.
 		return nil, ErrUnknownContentAvailabilityType
 	}
 
-	resp, err := server.contentServiceClient.AddContent(ctx, &contentserviceapi.AddContentRequest{
+	serializedToken, err := server.userDescriptorSerializer.Serialize(userToken)
+	_, err = server.contentServiceClient.AddContent(ctx, &contentserviceapi.AddContentRequest{
 		Name:             req.Name,
 		Type:             contentType,
 		AvailabilityType: availabilityType,
-		UserID:           userID,
+		UserToken:        serializedToken,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return &apigateway.AddContentResponse{ContentID: resp.ContentID}, nil
+	return &apigateway.AddContentResponse{}, nil
 }
 
 var apiServiceToContentServiceContentTypeMap = map[apigateway.ContentType]contentserviceapi.ContentType{

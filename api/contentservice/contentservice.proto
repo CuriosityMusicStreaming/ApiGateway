@@ -7,7 +7,7 @@ import "google/protobuf/empty.proto";
 option go_package = ".;contentservice";
 
 service ContentService {
-    rpc AddContent (AddContentRequest) returns (AddContentResponse) {
+    rpc AddContent (AddContentRequest) returns (google.protobuf.Empty) {
         option (google.api.http) = {
             post: "/api/cs/v1/add-content"
             body: "*"
@@ -41,11 +41,7 @@ message AddContentRequest {
     string name = 1;
     ContentType type = 2;
     ContentAvailabilityType availabilityType = 3;
-    string userID = 4;
-}
-
-message AddContentResponse {
-    string contentID = 1;
+    string userToken = 4;
 }
 
 enum ContentType {

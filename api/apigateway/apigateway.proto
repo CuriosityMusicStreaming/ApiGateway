@@ -13,6 +13,13 @@ service ApiGateway {
         };
     }
 
+    rpc AddUser (AddUserRequest) returns (AddUserResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/add-user"
+            body: "*"
+        };
+    }
+
     rpc AddContent (AddContentRequest) returns (AddContentResponse) {
         option (google.api.http) = {
             post: "/api/v1/add-content"
@@ -24,6 +31,7 @@ service ApiGateway {
 message AddUserRequest {
     string email = 1;
     string password = 2;
+    UserRole role = 3;
 }
 
 message AddUserResponse {
@@ -57,4 +65,9 @@ enum ContentType {
 enum ContentAvailabilityType {
     Public = 0;
     Private = 1;
+}
+
+enum UserRole {
+    LISTENER = 0;
+    CREATOR = 1;
 }

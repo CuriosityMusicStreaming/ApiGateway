@@ -6,7 +6,7 @@ import (
 	userserviceapi "apigateway/api/userservice"
 	"apigateway/pkg/apigateway/infrastructure/auth"
 	"context"
-	"fmt"
+	commonauth "github.com/CuriosityMusicStreaming/ComponentsPool/pkg/app/auth"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -21,18 +21,21 @@ func NewApiGatewayServer(
 	contentServiceClient contentserviceapi.ContentServiceClient,
 	userServiceClient userserviceapi.UserServiceClient,
 	authenticationService auth.AuthenticationService,
+	userDescriptorSerializer commonauth.UserDescriptorSerializer,
 ) apigateway.ApiGatewayServer {
 	return &apiGatewayServer{
-		contentServiceClient:  contentServiceClient,
-		userServiceClient:     userServiceClient,
-		authenticationService: authenticationService,
+		contentServiceClient:     contentServiceClient,
+		userServiceClient:        userServiceClient,
+		authenticationService:    authenticationService,
+		userDescriptorSerializer: userDescriptorSerializer,
 	}
 }
 
 type apiGatewayServer struct {
-	contentServiceClient  contentserviceapi.ContentServiceClient
-	userServiceClient     userserviceapi.UserServiceClient
-	authenticationService auth.AuthenticationService
+	contentServiceClient     contentserviceapi.ContentServiceClient
+	userServiceClient        userserviceapi.UserServiceClient
+	authenticationService    auth.AuthenticationService
+	userDescriptorSerializer commonauth.UserDescriptorSerializer
 }
 
 func (server *apiGatewayServer) AuthenticateUser(ctx context.Context, req *apigateway.AuthenticateUserRequest) (*apigateway.AuthenticateUserResponse, error) {
@@ -49,23 +52,21 @@ func (server *apiGatewayServer) AuthenticateUser(ctx context.Context, req *apiga
 	return &apigateway.AuthenticateUserResponse{UserID: resp.UserID}, err
 }
 
-func (server *apiGatewayServer) authenticateUser(ctx context.Context) (string, error) {
+func (server *apiGatewayServer) authenticateUser(ctx context.Context) (commonauth.UserDescriptor, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return "", status.Errorf(codes.PermissionDenied, "missing context")
+		return commonauth.UserDescriptor{}, status.Errorf(codes.PermissionDenied, "missing context")
 	}
-
-	fmt.Println(md)
 
 	authorizationHeaders := md.Get(authorizationHeaderName)
 	if len(authorizationHeaders) == 0 {
-		return "", status.Errorf(codes.PermissionDenied, "missing authentication header")
+		return commonauth.UserDescriptor{}, status.Errorf(codes.PermissionDenied, "missing authentication header")
 	}
 	header := authorizationHeaders[0]
 
 	token, err := server.authenticationService.ReceiveUserID(header)
 	if err != nil {
-		return "", err
+		return commonauth.UserDescriptor{}, err
 	}
 
 	return token, nil

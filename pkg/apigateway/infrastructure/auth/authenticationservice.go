@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"github.com/CuriosityMusicStreaming/ComponentsPool/pkg/app/auth"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"strings"
@@ -18,7 +19,7 @@ var (
 )
 
 type AuthenticationService interface {
-	ReceiveUserID(header string) (string, error)
+	ReceiveUserID(header string) (auth.UserDescriptor, error)
 }
 
 func NewAuthenticationService(authType Type) AuthenticationService {
@@ -29,21 +30,21 @@ type authenticationService struct {
 	authType Type
 }
 
-func (service *authenticationService) ReceiveUserID(header string) (string, error) {
+func (service *authenticationService) ReceiveUserID(header string) (auth.UserDescriptor, error) {
 	if !strings.HasPrefix(header, string(service.authType)) {
-		return "", ErrInvalidAuthorizationHeader
+		return auth.UserDescriptor{}, ErrInvalidAuthorizationHeader
 	}
 
 	parts := strings.Split(header, " ")
 	if len(parts) != 2 {
-		return "", ErrInvalidAuthorizationHeader
+		return auth.UserDescriptor{}, ErrInvalidAuthorizationHeader
 	}
 
 	token := parts[1]
-	_, err := uuid.Parse(token)
+	userID, err := uuid.Parse(token)
 	if err != nil {
-		return "", ErrInvalidToken
+		return auth.UserDescriptor{}, ErrInvalidToken
 	}
 
-	return token, nil
+	return auth.UserDescriptor{UserID: userID}, nil
 }

@@ -8,6 +8,7 @@ import (
 	"apigateway/pkg/apigateway/infrastructure/transport"
 	"apigateway/pkg/apigateway/infrastructure/transport/apiserver"
 	"context"
+	commonauth "github.com/CuriosityMusicStreaming/ComponentsPool/pkg/app/auth"
 	log "github.com/CuriosityMusicStreaming/ComponentsPool/pkg/app/logger"
 	jsonlog "github.com/CuriosityMusicStreaming/ComponentsPool/pkg/infrastructure/logger"
 	"github.com/CuriosityMusicStreaming/ComponentsPool/pkg/infrastructure/server"
@@ -135,6 +136,7 @@ func initApiServer(config *config) (apigateway.ApiGatewayServer, error) {
 		contentServiceClient,
 		userServiceClient,
 		auth.NewAuthenticationService(auth.TypeBearer),
+		commonauth.NewUserDescriptorSerializer(),
 	), nil
 }
 
