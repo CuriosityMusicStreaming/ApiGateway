@@ -5,26 +5,11 @@ import (
 	"fmt"
 	log "github.com/CuriosityMusicStreaming/ComponentsPool/pkg/app/logger"
 	"github.com/CuriosityMusicStreaming/ComponentsPool/pkg/infrastructure/activity"
-	logger "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
-	"net/http"
 	"strings"
 	"time"
 )
-
-func NewLoggingMiddleware(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		start := time.Now()
-		h.ServeHTTP(writer, request)
-
-		logger.WithFields(logger.Fields{
-			"duration": fmt.Sprintf("%v", time.Since(start)),
-			"method":   request.Method,
-			"url":      request.RequestURI,
-		}).Info("request finished")
-	})
-}
 
 func NewLoggerServerInterceptor(logger log.Logger) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {

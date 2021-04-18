@@ -4,6 +4,7 @@ import (
 	"apigateway/api/apigateway"
 	contentserviceapi "apigateway/api/contentservice"
 	userserviceapi "apigateway/api/userservice"
+	"apigateway/pkg/apigateway/infrastructure/auth"
 	"context"
 	"fmt"
 	"google.golang.org/grpc"
@@ -19,16 +20,19 @@ const (
 func NewApiGatewayServer(
 	contentServiceClient contentserviceapi.ContentServiceClient,
 	userServiceClient userserviceapi.UserServiceClient,
+	authenticationService auth.AuthenticationService,
 ) apigateway.ApiGatewayServer {
 	return &apiGatewayServer{
-		contentServiceClient: contentServiceClient,
-		userServiceClient:    userServiceClient,
+		contentServiceClient:  contentServiceClient,
+		userServiceClient:     userServiceClient,
+		authenticationService: authenticationService,
 	}
 }
 
 type apiGatewayServer struct {
-	contentServiceClient contentserviceapi.ContentServiceClient
-	userServiceClient    userserviceapi.UserServiceClient
+	contentServiceClient  contentserviceapi.ContentServiceClient
+	userServiceClient     userserviceapi.UserServiceClient
+	authenticationService auth.AuthenticationService
 }
 
 func (server *apiGatewayServer) AuthenticateUser(ctx context.Context, req *apigateway.AuthenticateUserRequest) (*apigateway.AuthenticateUserResponse, error) {
@@ -48,16 +52,21 @@ func (server *apiGatewayServer) AuthenticateUser(ctx context.Context, req *apiga
 func (server *apiGatewayServer) authenticateUser(ctx context.Context) (string, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return "", status.Errorf(codes.PermissionDenied, "missing authentication token")
+		return "", status.Errorf(codes.PermissionDenied, "missing context")
 	}
 
 	fmt.Println(md)
 
 	authorizationHeaders := md.Get(authorizationHeaderName)
 	if len(authorizationHeaders) == 0 {
-		return "", status.Errorf(codes.PermissionDenied, "missing authentication token")
+		return "", status.Errorf(codes.PermissionDenied, "missing authentication header")
 	}
-	token := authorizationHeaders[0]
+	header := authorizationHeaders[0]
+
+	token, err := server.authenticationService.ReceiveUserID(header)
+	if err != nil {
+		return "", err
+	}
 
 	return token, nil
 }

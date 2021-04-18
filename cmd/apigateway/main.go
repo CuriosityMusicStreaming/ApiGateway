@@ -4,6 +4,7 @@ import (
 	"apigateway/api/apigateway"
 	contentserviceapi "apigateway/api/contentservice"
 	userserviceapi "apigateway/api/userservice"
+	"apigateway/pkg/apigateway/infrastructure/auth"
 	"apigateway/pkg/apigateway/infrastructure/transport"
 	"apigateway/pkg/apigateway/infrastructure/transport/apiserver"
 	"context"
@@ -87,7 +88,7 @@ func runService(config *config, logger log.MainLogger) error {
 			}).Methods(http.MethodGet)
 
 			httpServer = &http.Server{
-				Handler:      transport.NewLoggingMiddleware(router),
+				Handler:      router,
 				Addr:         config.ServeRESTAddress,
 				WriteTimeout: 15 * time.Second,
 				ReadTimeout:  15 * time.Second,
@@ -133,6 +134,7 @@ func initApiServer(config *config) (apigateway.ApiGatewayServer, error) {
 	return apiserver.NewApiGatewayServer(
 		contentServiceClient,
 		userServiceClient,
+		auth.NewAuthenticationService(auth.TypeBearer),
 	), nil
 }
 
@@ -146,7 +148,7 @@ func initContentServiceClient(commonOpts []grpc.DialOption, config *config) (con
 }
 
 func initUserServiceClient(commonOpts []grpc.DialOption, config *config) (userserviceapi.UserServiceClient, error) {
-	conn, err := grpc.Dial(config.ContentServiceGRPCAddress, commonOpts...)
+	conn, err := grpc.Dial(config.UserServiceGRPCAddress, commonOpts...)
 	if err != nil {
 		return nil, err
 	}
