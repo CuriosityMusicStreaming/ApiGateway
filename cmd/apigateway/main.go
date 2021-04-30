@@ -82,7 +82,6 @@ func runService(config *config, logger log.MainLogger) error {
 			router := mux.NewRouter()
 			router.PathPrefix("/api/").Handler(grpcGatewayMux)
 
-			// Implement healthcheck for Kubernetes
 			router.HandleFunc("/resilience/ready", func(w http.ResponseWriter, _ *http.Request) {
 				w.WriteHeader(http.StatusOK)
 				_, _ = io.WriteString(w, http.StatusText(http.StatusOK))
