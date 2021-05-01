@@ -1,0 +1,4 @@
+api:
+    apigateway: master
+    contentservice: master
+    userservice: master

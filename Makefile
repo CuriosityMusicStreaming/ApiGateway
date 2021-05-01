@@ -9,12 +9,16 @@ export DOCKER_IMAGE_NAME = $(REGISTRY)-$(APP_CMD_NAME):master
 all: build check test
 
 .PHONY: build
-build: generate modules
+build: sync-api generate modules
 	bin/go-build.sh "cmd" "bin/$(APP_CMD_NAME)" $(APP_CMD_NAME)
 
 .PHONY: generate
 generate:
 	bin/generate-grpc.sh $(foreach path,$(APP_PROTO_FILES),"$(path)")
+
+.PHONY: sync-api
+sync-api:
+	apisynchronizer sync -o api
 
 .PHONY: modules
 modules:
