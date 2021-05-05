@@ -30,6 +30,34 @@ func (server *apiGatewayServer) CreatePlaylist(ctx context.Context, req *apigate
 	}, nil
 }
 
+func (server *apiGatewayServer) GetPlaylist(ctx context.Context, req *apigateway.GetPlaylistRequest) (*apigateway.GetPlaylistResponse, error) {
+	userToken, err := server.authenticateUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	serializedToken, err := server.userDescriptorSerializer.Serialize(userToken)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := server.playlistServiceClient.GetPlaylist(ctx, &api.GetPlaylistRequest{
+		PlaylistID: req.PlaylistID,
+		UserToken:  serializedToken,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &apigateway.GetPlaylistResponse{
+		Name:               resp.Name,
+		OwnerID:            resp.OwnerID,
+		CreatedAtTimestamp: resp.CreatedAtTimestamp,
+		UpdatedAtTimestamp: resp.UpdatedAtTimestamp,
+		PlaylistItems:      convertToPlaylistItemsApiGateway(resp.PlaylistItems),
+	}, nil
+}
+
 func (server *apiGatewayServer) GetUserPlaylists(ctx context.Context, req *apigateway.GetUserPlaylistsRequest) (*apigateway.GetUserPlaylistsResponse, error) {
 	userToken, err := server.authenticateUser(ctx)
 	if err != nil {
