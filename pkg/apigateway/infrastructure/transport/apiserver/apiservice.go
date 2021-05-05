@@ -3,6 +3,7 @@ package apiserver
 import (
 	"apigateway/api/apigateway"
 	contentserviceapi "apigateway/api/contentservice"
+	playlistserviceapi "apigateway/api/playlistservice"
 	userserviceapi "apigateway/api/userservice"
 	"apigateway/pkg/apigateway/infrastructure/auth"
 	"context"
@@ -20,12 +21,14 @@ const (
 func NewApiGatewayServer(
 	contentServiceClient contentserviceapi.ContentServiceClient,
 	userServiceClient userserviceapi.UserServiceClient,
+	playlistServiceClient playlistserviceapi.PlayListServiceClient,
 	authenticationService auth.AuthenticationService,
 	userDescriptorSerializer commonauth.UserDescriptorSerializer,
 ) apigateway.ApiGatewayServer {
 	return &apiGatewayServer{
 		contentServiceClient:     contentServiceClient,
 		userServiceClient:        userServiceClient,
+		playlistServiceClient:    playlistServiceClient,
 		authenticationService:    authenticationService,
 		userDescriptorSerializer: userDescriptorSerializer,
 	}
@@ -34,6 +37,7 @@ func NewApiGatewayServer(
 type apiGatewayServer struct {
 	contentServiceClient     contentserviceapi.ContentServiceClient
 	userServiceClient        userserviceapi.UserServiceClient
+	playlistServiceClient    playlistserviceapi.PlayListServiceClient
 	authenticationService    auth.AuthenticationService
 	userDescriptorSerializer commonauth.UserDescriptorSerializer
 }

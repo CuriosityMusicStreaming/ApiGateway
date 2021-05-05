@@ -3,6 +3,7 @@ package main
 import (
 	"apigateway/api/apigateway"
 	contentserviceapi "apigateway/api/contentservice"
+	playlistserviceapi "apigateway/api/playlistservice"
 	userserviceapi "apigateway/api/userservice"
 	"apigateway/pkg/apigateway/infrastructure/auth"
 	"apigateway/pkg/apigateway/infrastructure/transport"
@@ -125,8 +126,16 @@ func initApiServer(config *config) (apigateway.ApiGatewayServer, error) {
 	}
 
 	contentServiceClient, err := initContentServiceClient(opts, config)
+	if err != nil {
+		return nil, err
+	}
 
 	userServiceClient, err := initUserServiceClient(opts, config)
+	if err != nil {
+		return nil, err
+	}
+
+	playlistServiceClient, err := initPlaylistServiceClient(opts, config)
 	if err != nil {
 		return nil, err
 	}
@@ -134,6 +143,7 @@ func initApiServer(config *config) (apigateway.ApiGatewayServer, error) {
 	return apiserver.NewApiGatewayServer(
 		contentServiceClient,
 		userServiceClient,
+		playlistServiceClient,
 		auth.NewAuthenticationService(auth.TypeBearer),
 		commonauth.NewUserDescriptorSerializer(),
 	), nil
@@ -155,4 +165,13 @@ func initUserServiceClient(commonOpts []grpc.DialOption, config *config) (userse
 	}
 
 	return userserviceapi.NewUserServiceClient(conn), nil
+}
+
+func initPlaylistServiceClient(commonOpts []grpc.DialOption, config *config) (playlistserviceapi.PlayListServiceClient, error) {
+	conn, err := grpc.Dial(config.PlaylistServiceGRPCAddress, commonOpts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return playlistserviceapi.NewPlayListServiceClient(conn), nil
 }
