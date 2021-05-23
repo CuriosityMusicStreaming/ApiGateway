@@ -5,6 +5,7 @@ import (
 	contentserviceapi "apigateway/api/contentservice"
 	"context"
 	"github.com/pkg/errors"
+	context2 "golang.org/x/net/context"
 )
 
 var (
@@ -42,6 +43,33 @@ func (server *apiGatewayServer) AddContent(ctx context.Context, req *apigateway.
 	return &apigateway.AddContentResponse{}, nil
 }
 
+func (server *apiGatewayServer) GetAuthorContent(ctx context2.Context, _ *apigateway.GetAuthorContentRequest) (*apigateway.GetAuthorContentResponse, error) {
+	userToken, err := server.authenticateUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	serializedToken, err := server.userDescriptorSerializer.Serialize(userToken)
+
+	resp, err := server.contentServiceClient.GetAuthorContent(ctx, &contentserviceapi.GetAuthorContentRequest{UserToken: serializedToken})
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]*apigateway.Content, 0, len(resp.Contents))
+	for _, content := range resp.Contents {
+		res = append(res, &apigateway.Content{
+			ContentID:        content.ContentID,
+			Name:             content.Name,
+			AuthorID:         content.AuthorID,
+			Type:             contentServiceContentTypeToApiServiceMap[content.Type],
+			AvailabilityType: contentServiceAvailabilityTypeToApiServiceMap[content.AvailabilityType],
+		})
+	}
+
+	return &apigateway.GetAuthorContentResponse{Contents: res}, nil
+}
+
 var apiServiceToContentServiceContentTypeMap = map[apigateway.ContentType]contentserviceapi.ContentType{
 	apigateway.ContentType_Song:    contentserviceapi.ContentType_Song,
 	apigateway.ContentType_Podcast: contentserviceapi.ContentType_Podcast,
@@ -50,4 +78,14 @@ var apiServiceToContentServiceContentTypeMap = map[apigateway.ContentType]conten
 var apiServiceToContentServiceAvailabilityTypeMap = map[apigateway.ContentAvailabilityType]contentserviceapi.ContentAvailabilityType{
 	apigateway.ContentAvailabilityType_Public:  contentserviceapi.ContentAvailabilityType_Public,
 	apigateway.ContentAvailabilityType_Private: contentserviceapi.ContentAvailabilityType_Private,
+}
+
+var contentServiceContentTypeToApiServiceMap = map[contentserviceapi.ContentType]apigateway.ContentType{
+	contentserviceapi.ContentType_Song:    apigateway.ContentType_Song,
+	contentserviceapi.ContentType_Podcast: apigateway.ContentType_Podcast,
+}
+
+var contentServiceAvailabilityTypeToApiServiceMap = map[contentserviceapi.ContentAvailabilityType]apigateway.ContentAvailabilityType{
+	contentserviceapi.ContentAvailabilityType_Public:  apigateway.ContentAvailabilityType_Public,
+	contentserviceapi.ContentAvailabilityType_Private: apigateway.ContentAvailabilityType_Private,
 }
