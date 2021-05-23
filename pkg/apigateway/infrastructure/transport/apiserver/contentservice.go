@@ -6,6 +6,7 @@ import (
 	"context"
 	"github.com/pkg/errors"
 	context2 "golang.org/x/net/context"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 var (
@@ -41,6 +42,26 @@ func (server *apiGatewayServer) AddContent(ctx context.Context, req *apigateway.
 	}
 
 	return &apigateway.AddContentResponse{}, nil
+}
+
+func (server *apiGatewayServer) SetContentAvailabilityType(ctx context.Context, req *apigateway.SetContentAvailabilityTypeRequest) (*emptypb.Empty, error) {
+	userToken, err := server.authenticateUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	availabilityType, ok := apiServiceToContentServiceAvailabilityTypeMap[req.NewContentAvailabilityType]
+	if !ok {
+		return nil, ErrUnknownContentAvailabilityType
+	}
+
+	serializedToken, err := server.userDescriptorSerializer.Serialize(userToken)
+	_, err = server.contentServiceClient.SetContentAvailabilityType(ctx, &contentserviceapi.SetContentAvailabilityTypeRequest{
+		ContentID:                  req.ContentID,
+		NewContentAvailabilityType: availabilityType,
+		UserToken:                  serializedToken,
+	})
+	return &emptypb.Empty{}, err
 }
 
 func (server *apiGatewayServer) GetAuthorContent(ctx context2.Context, _ *apigateway.GetAuthorContentRequest) (*apigateway.GetAuthorContentResponse, error) {
