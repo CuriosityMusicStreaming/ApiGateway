@@ -4,6 +4,7 @@ import (
 	"apigateway/api/apigateway"
 	api "apigateway/api/playlistservice"
 	"golang.org/x/net/context"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 func (server *apiGatewayServer) CreatePlaylist(ctx context.Context, req *apigateway.CreatePlaylistRequest) (*apigateway.CreatePlaylistResponse, error) {
@@ -104,6 +105,44 @@ func (server *apiGatewayServer) AddToPlaylist(ctx context.Context, req *apigatew
 	return &apigateway.AddToPlaylistResponse{
 		PlaylistItemID: resp.PlaylistItemID,
 	}, nil
+}
+
+func (server *apiGatewayServer) RemoveFromPlaylist(ctx context.Context, req *apigateway.RemoveFromPlaylistRequest) (*emptypb.Empty, error) {
+	userToken, err := server.authenticateUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	serializedToken, err := server.userDescriptorSerializer.Serialize(userToken)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = server.playlistServiceClient.RemoveFromPlaylist(ctx, &api.RemoveFromPlaylistRequest{
+		PlaylistItemID: req.PlaylistItemID,
+		UserToken:      serializedToken,
+	})
+
+	return &emptypb.Empty{}, err
+}
+
+func (server *apiGatewayServer) RemovePlaylist(ctx context.Context, req *apigateway.RemovePlaylistRequest) (*emptypb.Empty, error) {
+	userToken, err := server.authenticateUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	serializedToken, err := server.userDescriptorSerializer.Serialize(userToken)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = server.playlistServiceClient.RemovePlaylist(ctx, &api.RemovePlaylistRequest{
+		PlaylistID: req.PlaylistID,
+		UserToken:  serializedToken,
+	})
+
+	return &emptypb.Empty{}, err
 }
 
 func convertToPlaylistsApiGateway(playlists []*api.Playlist) []*apigateway.Playlist {
