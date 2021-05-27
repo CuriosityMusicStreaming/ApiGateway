@@ -4,7 +4,8 @@ export APP_PROTO_FILES = \
 	api/apigateway/apigateway.proto \
 	api/contentservice/contentservice.proto \
 	api/userservice/userservice.proto \
-	api/playlistservice/playlistservice.proto
+	api/playlistservice/playlistservice.proto \
+	api/authenticationservice/authenticationservice.proto
 export DOCKER_IMAGE_NAME = $(REGISTRY)-$(APP_CMD_NAME):master
 
 all: build check test

@@ -2,6 +2,7 @@ package main
 
 import (
 	"apigateway/api/apigateway"
+	"apigateway/api/authenticationservice"
 	contentserviceapi "apigateway/api/contentservice"
 	playlistserviceapi "apigateway/api/playlistservice"
 	userserviceapi "apigateway/api/userservice"
@@ -140,10 +141,16 @@ func initApiServer(config *config) (apigateway.ApiGatewayServer, error) {
 		return nil, err
 	}
 
+	authenticationServiceClient, err := initAuthenticationServiceClient(opts, config)
+	if err != nil {
+		return nil, err
+	}
+
 	return apiserver.NewApiGatewayServer(
 		contentServiceClient,
 		userServiceClient,
 		playlistServiceClient,
+		authenticationServiceClient,
 		auth.NewAuthenticationService(auth.TypeBearer),
 		commonauth.NewUserDescriptorSerializer(),
 	), nil
@@ -174,4 +181,13 @@ func initPlaylistServiceClient(commonOpts []grpc.DialOption, config *config) (pl
 	}
 
 	return playlistserviceapi.NewPlayListServiceClient(conn), nil
+}
+
+func initAuthenticationServiceClient(commonOpts []grpc.DialOption, config *config) (authenticationservice.AuthenticationServiceClient, error) {
+	conn, err := grpc.Dial(config.AuthenticationServiceGRPCAddress, commonOpts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return authenticationservice.NewAuthenticationServiceClient(conn), nil
 }

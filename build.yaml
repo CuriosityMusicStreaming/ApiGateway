@@ -3,3 +3,4 @@ api:
     contentservice: master
     userservice: master
     playlistservice: master
+    authenticationservice: master

@@ -2,6 +2,7 @@ package apiserver
 
 import (
 	"apigateway/api/apigateway"
+	authenticationserviceapi "apigateway/api/authenticationservice"
 	contentserviceapi "apigateway/api/contentservice"
 	playlistserviceapi "apigateway/api/playlistservice"
 	userserviceapi "apigateway/api/userservice"
@@ -22,28 +23,31 @@ func NewApiGatewayServer(
 	contentServiceClient contentserviceapi.ContentServiceClient,
 	userServiceClient userserviceapi.UserServiceClient,
 	playlistServiceClient playlistserviceapi.PlayListServiceClient,
+	authenticationServiceClient authenticationserviceapi.AuthenticationServiceClient,
 	authenticationService auth.AuthenticationService,
 	userDescriptorSerializer commonauth.UserDescriptorSerializer,
 ) apigateway.ApiGatewayServer {
 	return &apiGatewayServer{
-		contentServiceClient:     contentServiceClient,
-		userServiceClient:        userServiceClient,
-		playlistServiceClient:    playlistServiceClient,
-		authenticationService:    authenticationService,
-		userDescriptorSerializer: userDescriptorSerializer,
+		contentServiceClient:        contentServiceClient,
+		userServiceClient:           userServiceClient,
+		playlistServiceClient:       playlistServiceClient,
+		authenticationServiceClient: authenticationServiceClient,
+		authenticationService:       authenticationService,
+		userDescriptorSerializer:    userDescriptorSerializer,
 	}
 }
 
 type apiGatewayServer struct {
-	contentServiceClient     contentserviceapi.ContentServiceClient
-	userServiceClient        userserviceapi.UserServiceClient
-	playlistServiceClient    playlistserviceapi.PlayListServiceClient
-	authenticationService    auth.AuthenticationService
-	userDescriptorSerializer commonauth.UserDescriptorSerializer
+	contentServiceClient        contentserviceapi.ContentServiceClient
+	userServiceClient           userserviceapi.UserServiceClient
+	playlistServiceClient       playlistserviceapi.PlayListServiceClient
+	authenticationServiceClient authenticationserviceapi.AuthenticationServiceClient
+	authenticationService       auth.AuthenticationService
+	userDescriptorSerializer    commonauth.UserDescriptorSerializer
 }
 
 func (server *apiGatewayServer) AuthenticateUser(ctx context.Context, req *apigateway.AuthenticateUserRequest) (*apigateway.AuthenticateUserResponse, error) {
-	resp, err := server.userServiceClient.AuthenticateUser(ctx, &userserviceapi.AuthenticateUserRequest{
+	resp, err := server.authenticationServiceClient.AuthenticateUser(ctx, &authenticationserviceapi.AuthenticateUserRequest{
 		Email:    req.Email,
 		Password: req.Password,
 	})
