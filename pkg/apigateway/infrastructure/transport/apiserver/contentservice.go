@@ -31,7 +31,7 @@ func (server *apiGatewayServer) AddContent(ctx context.Context, req *apigateway.
 	}
 
 	serializedToken, err := server.userDescriptorSerializer.Serialize(userToken)
-	_, err = server.contentServiceClient.AddContent(ctx, &contentserviceapi.AddContentRequest{
+	resp, err := server.contentServiceClient.AddContent(ctx, &contentserviceapi.AddContentRequest{
 		Name:             req.Name,
 		Type:             contentType,
 		AvailabilityType: availabilityType,
@@ -41,7 +41,25 @@ func (server *apiGatewayServer) AddContent(ctx context.Context, req *apigateway.
 		return nil, err
 	}
 
-	return &apigateway.AddContentResponse{}, nil
+	return &apigateway.AddContentResponse{ContentID: resp.ContentID}, nil
+}
+
+func (server *apiGatewayServer) DeleteContent(ctx context.Context, req *apigateway.DeleteContentRequest) (*emptypb.Empty, error) {
+	userToken, err := server.authenticateUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	serializedToken, err := server.userDescriptorSerializer.Serialize(userToken)
+	_, err = server.contentServiceClient.DeleteContent(ctx, &contentserviceapi.DeleteContentRequest{
+		ContentID: req.ContentID,
+		UserToken: serializedToken,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &emptypb.Empty{}, nil
 }
 
 func (server *apiGatewayServer) SetContentAvailabilityType(ctx context.Context, req *apigateway.SetContentAvailabilityTypeRequest) (*emptypb.Empty, error) {
