@@ -107,6 +107,26 @@ func (server *apiGatewayServer) AddToPlaylist(ctx context.Context, req *apigatew
 	}, nil
 }
 
+func (server *apiGatewayServer) SetPlaylistName(ctx context.Context, req *apigateway.SetPlaylistNameRequest) (*emptypb.Empty, error) {
+	userToken, err := server.authenticateUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	serializedToken, err := server.userDescriptorSerializer.Serialize(userToken)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = server.playlistServiceClient.SetPlaylistName(ctx, &api.SetPlaylistNameRequest{
+		PlaylistID: req.PlaylistID,
+		NewName:    req.NewName,
+		UserToken:  serializedToken,
+	})
+
+	return &emptypb.Empty{}, err
+}
+
 func (server *apiGatewayServer) RemoveFromPlaylist(ctx context.Context, req *apigateway.RemoveFromPlaylistRequest) (*emptypb.Empty, error) {
 	userToken, err := server.authenticateUser(ctx)
 	if err != nil {
