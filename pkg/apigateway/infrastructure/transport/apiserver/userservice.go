@@ -1,10 +1,12 @@
 package apiserver
 
 import (
+	"context"
+
+	"github.com/pkg/errors"
+
 	"apigateway/api/apigateway"
 	userserviceapi "apigateway/api/userservice"
-	"context"
-	"github.com/pkg/errors"
 )
 
 var (

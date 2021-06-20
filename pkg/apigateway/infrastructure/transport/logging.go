@@ -3,12 +3,13 @@ package transport
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
+
 	log "github.com/CuriosityMusicStreaming/ComponentsPool/pkg/app/logger"
 	"github.com/CuriosityMusicStreaming/ComponentsPool/pkg/infrastructure/activity"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
-	"strings"
-	"time"
 )
 
 func NewLoggerServerInterceptor(logger log.Logger) grpc.UnaryServerInterceptor {

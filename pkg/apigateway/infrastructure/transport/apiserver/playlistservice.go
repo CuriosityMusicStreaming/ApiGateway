@@ -1,10 +1,11 @@
 package apiserver
 
 import (
-	"apigateway/api/apigateway"
-	api "apigateway/api/playlistservice"
 	"golang.org/x/net/context"
 	"google.golang.org/protobuf/types/known/emptypb"
+
+	"apigateway/api/apigateway"
+	api "apigateway/api/playlistservice"
 )
 
 func (server *apiGatewayServer) CreatePlaylist(ctx context.Context, req *apigateway.CreatePlaylistRequest) (*apigateway.CreatePlaylistResponse, error) {
@@ -55,7 +56,7 @@ func (server *apiGatewayServer) GetPlaylist(ctx context.Context, req *apigateway
 		OwnerID:            resp.OwnerID,
 		CreatedAtTimestamp: resp.CreatedAtTimestamp,
 		UpdatedAtTimestamp: resp.UpdatedAtTimestamp,
-		PlaylistItems:      convertToPlaylistItemsApiGateway(resp.PlaylistItems),
+		PlaylistItems:      convertToPlaylistItemsAPIGateway(resp.PlaylistItems),
 	}, nil
 }
 
@@ -78,7 +79,7 @@ func (server *apiGatewayServer) GetUserPlaylists(ctx context.Context, _ *apigate
 	}
 
 	return &apigateway.GetUserPlaylistsResponse{
-		Playlists: convertToPlaylistsApiGateway(resp.Playlists),
+		Playlists: convertToPlaylistsAPIGateway(resp.Playlists),
 	}, nil
 }
 
@@ -165,26 +166,26 @@ func (server *apiGatewayServer) RemovePlaylist(ctx context.Context, req *apigate
 	return &emptypb.Empty{}, err
 }
 
-func convertToPlaylistsApiGateway(playlists []*api.Playlist) []*apigateway.Playlist {
+func convertToPlaylistsAPIGateway(playlists []*api.Playlist) []*apigateway.Playlist {
 	result := make([]*apigateway.Playlist, len(playlists))
 	for i, playlist := range playlists {
-		result[i] = convertToPlaylistApiGateway(playlist)
+		result[i] = convertToPlaylistAPIGateway(playlist)
 	}
 	return result
 }
 
-func convertToPlaylistApiGateway(playlist *api.Playlist) *apigateway.Playlist {
+func convertToPlaylistAPIGateway(playlist *api.Playlist) *apigateway.Playlist {
 	return &apigateway.Playlist{
 		PlaylistID:         playlist.PlaylistID,
 		Name:               playlist.Name,
 		OwnerID:            playlist.OwnerID,
 		CreatedAtTimestamp: playlist.CreatedAtTimestamp,
 		UpdatedAtTimestamp: playlist.UpdatedAtTimestamp,
-		PlaylistItems:      convertToPlaylistItemsApiGateway(playlist.PlaylistItems),
+		PlaylistItems:      convertToPlaylistItemsAPIGateway(playlist.PlaylistItems),
 	}
 }
 
-func convertToPlaylistItemsApiGateway(playlistItems []*api.PlaylistItem) []*apigateway.PlaylistItem {
+func convertToPlaylistItemsAPIGateway(playlistItems []*api.PlaylistItem) []*apigateway.PlaylistItem {
 	result := make([]*apigateway.PlaylistItem, len(playlistItems))
 	for i, item := range playlistItems {
 		result[i] = &apigateway.PlaylistItem{

@@ -1,21 +1,7 @@
 package main
 
 import (
-	"apigateway/api/apigateway"
-	"apigateway/api/authenticationservice"
-	contentserviceapi "apigateway/api/contentservice"
-	playlistserviceapi "apigateway/api/playlistservice"
-	userserviceapi "apigateway/api/userservice"
-	"apigateway/pkg/apigateway/infrastructure/auth"
-	"apigateway/pkg/apigateway/infrastructure/transport"
-	"apigateway/pkg/apigateway/infrastructure/transport/apiserver"
 	"context"
-	commonauth "github.com/CuriosityMusicStreaming/ComponentsPool/pkg/app/auth"
-	log "github.com/CuriosityMusicStreaming/ComponentsPool/pkg/app/logger"
-	jsonlog "github.com/CuriosityMusicStreaming/ComponentsPool/pkg/infrastructure/logger"
-	"github.com/CuriosityMusicStreaming/ComponentsPool/pkg/infrastructure/server"
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"google.golang.org/grpc"
 	"io"
 	stdlog "log"
 	"net/http"
@@ -24,7 +10,22 @@ import (
 	"syscall"
 	"time"
 
+	commonauth "github.com/CuriosityMusicStreaming/ComponentsPool/pkg/app/auth"
+	log "github.com/CuriosityMusicStreaming/ComponentsPool/pkg/app/logger"
+	jsonlog "github.com/CuriosityMusicStreaming/ComponentsPool/pkg/infrastructure/logger"
+	"github.com/CuriosityMusicStreaming/ComponentsPool/pkg/infrastructure/server"
 	"github.com/gorilla/mux"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"google.golang.org/grpc"
+
+	"apigateway/api/apigateway"
+	"apigateway/api/authenticationservice"
+	contentserviceapi "apigateway/api/contentservice"
+	playlistserviceapi "apigateway/api/playlistservice"
+	userserviceapi "apigateway/api/userservice"
+	"apigateway/pkg/apigateway/infrastructure/auth"
+	"apigateway/pkg/apigateway/infrastructure/transport"
+	"apigateway/pkg/apigateway/infrastructure/transport/apiserver"
 )
 
 var appID = "UNKNOWN"
@@ -54,13 +55,13 @@ func runService(config *config, logger log.MainLogger) error {
 
 	serverHub := server.NewHub(stopChan)
 
-	apiServer, err := initApiServer(config)
+	apiServer, err := initAPIServer(config)
 	if err != nil {
 		return err
 	}
 
 	baseServer := grpc.NewServer(grpc.UnaryInterceptor(transport.NewLoggerServerInterceptor(logger)))
-	apigateway.RegisterApiGatewayServer(baseServer, apiServer)
+	apigateway.RegisterAPIGatewayServer(baseServer, apiServer)
 
 	serverHub.AddServer(server.NewGrpcServer(
 		baseServer,
@@ -76,7 +77,7 @@ func runService(config *config, logger log.MainLogger) error {
 		ServeImpl: func() error {
 			grpcGatewayMux := runtime.NewServeMux()
 			opts := []grpc.DialOption{grpc.WithInsecure()}
-			err := apigateway.RegisterApiGatewayHandlerFromEndpoint(ctx, grpcGatewayMux, config.ServeGRPCAddress, opts)
+			err := apigateway.RegisterAPIGatewayHandlerFromEndpoint(ctx, grpcGatewayMux, config.ServeGRPCAddress, opts)
 			if err != nil {
 				return err
 			}
@@ -121,7 +122,7 @@ func initLogger() (log.MainLogger, error) {
 	return jsonlog.NewLogger(&jsonlog.Config{AppName: appID}), nil
 }
 
-func initApiServer(config *config) (apigateway.ApiGatewayServer, error) {
+func initAPIServer(config *config) (apigateway.APIGatewayServer, error) {
 	opts := []grpc.DialOption{
 		grpc.WithInsecure(),
 	}
@@ -146,7 +147,7 @@ func initApiServer(config *config) (apigateway.ApiGatewayServer, error) {
 		return nil, err
 	}
 
-	return apiserver.NewApiGatewayServer(
+	return apiserver.NewAPIGatewayServer(
 		contentServiceClient,
 		userServiceClient,
 		playlistServiceClient,

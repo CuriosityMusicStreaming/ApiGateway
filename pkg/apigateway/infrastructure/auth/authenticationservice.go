@@ -1,10 +1,11 @@
 package auth
 
 import (
+	"strings"
+
 	"github.com/CuriosityMusicStreaming/ComponentsPool/pkg/app/auth"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	"strings"
 )
 
 type Type string

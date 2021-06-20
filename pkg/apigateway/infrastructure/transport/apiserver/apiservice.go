@@ -1,32 +1,34 @@
 package apiserver
 
 import (
+	"context"
+
+	commonauth "github.com/CuriosityMusicStreaming/ComponentsPool/pkg/app/auth"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
+
 	"apigateway/api/apigateway"
 	authenticationserviceapi "apigateway/api/authenticationservice"
 	contentserviceapi "apigateway/api/contentservice"
 	playlistserviceapi "apigateway/api/playlistservice"
 	userserviceapi "apigateway/api/userservice"
 	"apigateway/pkg/apigateway/infrastructure/auth"
-	"context"
-	commonauth "github.com/CuriosityMusicStreaming/ComponentsPool/pkg/app/auth"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
 )
 
 const (
 	authorizationHeaderName = "authorization"
 )
 
-func NewApiGatewayServer(
+func NewAPIGatewayServer(
 	contentServiceClient contentserviceapi.ContentServiceClient,
 	userServiceClient userserviceapi.UserServiceClient,
 	playlistServiceClient playlistserviceapi.PlayListServiceClient,
 	authenticationServiceClient authenticationserviceapi.AuthenticationServiceClient,
 	authenticationService auth.AuthenticationService,
 	userDescriptorSerializer commonauth.UserDescriptorSerializer,
-) apigateway.ApiGatewayServer {
+) apigateway.APIGatewayServer {
 	return &apiGatewayServer{
 		contentServiceClient:        contentServiceClient,
 		userServiceClient:           userServiceClient,

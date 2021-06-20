@@ -1,12 +1,13 @@
 package apiserver
 
 import (
+	"context"
+
+	"github.com/pkg/errors"
+	"google.golang.org/protobuf/types/known/emptypb"
+
 	"apigateway/api/apigateway"
 	contentserviceapi "apigateway/api/contentservice"
-	"context"
-	"github.com/pkg/errors"
-	context2 "golang.org/x/net/context"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 var (
@@ -31,6 +32,10 @@ func (server *apiGatewayServer) AddContent(ctx context.Context, req *apigateway.
 	}
 
 	serializedToken, err := server.userDescriptorSerializer.Serialize(userToken)
+	if err != nil {
+		return nil, err
+	}
+
 	resp, err := server.contentServiceClient.AddContent(ctx, &contentserviceapi.AddContentRequest{
 		Name:             req.Name,
 		Type:             contentType,
@@ -51,6 +56,10 @@ func (server *apiGatewayServer) DeleteContent(ctx context.Context, req *apigatew
 	}
 
 	serializedToken, err := server.userDescriptorSerializer.Serialize(userToken)
+	if err != nil {
+		return nil, err
+	}
+
 	_, err = server.contentServiceClient.DeleteContent(ctx, &contentserviceapi.DeleteContentRequest{
 		ContentID: req.ContentID,
 		UserToken: serializedToken,
@@ -74,6 +83,10 @@ func (server *apiGatewayServer) SetContentAvailabilityType(ctx context.Context, 
 	}
 
 	serializedToken, err := server.userDescriptorSerializer.Serialize(userToken)
+	if err != nil {
+		return nil, err
+	}
+
 	_, err = server.contentServiceClient.SetContentAvailabilityType(ctx, &contentserviceapi.SetContentAvailabilityTypeRequest{
 		ContentID:                  req.ContentID,
 		NewContentAvailabilityType: availabilityType,
@@ -82,13 +95,16 @@ func (server *apiGatewayServer) SetContentAvailabilityType(ctx context.Context, 
 	return &emptypb.Empty{}, err
 }
 
-func (server *apiGatewayServer) GetAuthorContent(ctx context2.Context, _ *apigateway.GetAuthorContentRequest) (*apigateway.GetAuthorContentResponse, error) {
+func (server *apiGatewayServer) GetAuthorContent(ctx context.Context, _ *apigateway.GetAuthorContentRequest) (*apigateway.GetAuthorContentResponse, error) {
 	userToken, err := server.authenticateUser(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	serializedToken, err := server.userDescriptorSerializer.Serialize(userToken)
+	if err != nil {
+		return nil, err
+	}
 
 	resp, err := server.contentServiceClient.GetAuthorContent(ctx, &contentserviceapi.GetAuthorContentRequest{UserToken: serializedToken})
 	if err != nil {
@@ -101,8 +117,8 @@ func (server *apiGatewayServer) GetAuthorContent(ctx context2.Context, _ *apigat
 			ContentID:        content.ContentID,
 			Name:             content.Name,
 			AuthorID:         content.AuthorID,
-			Type:             contentServiceContentTypeToApiServiceMap[content.Type],
-			AvailabilityType: contentServiceAvailabilityTypeToApiServiceMap[content.AvailabilityType],
+			Type:             contentServiceContentTypeToAPIServiceMap[content.Type],
+			AvailabilityType: contentServiceAvailabilityTypeToAPIServiceMap[content.AvailabilityType],
 		})
 	}
 
@@ -119,12 +135,12 @@ var apiServiceToContentServiceAvailabilityTypeMap = map[apigateway.ContentAvaila
 	apigateway.ContentAvailabilityType_Private: contentserviceapi.ContentAvailabilityType_Private,
 }
 
-var contentServiceContentTypeToApiServiceMap = map[contentserviceapi.ContentType]apigateway.ContentType{
+var contentServiceContentTypeToAPIServiceMap = map[contentserviceapi.ContentType]apigateway.ContentType{
 	contentserviceapi.ContentType_Song:    apigateway.ContentType_Song,
 	contentserviceapi.ContentType_Podcast: apigateway.ContentType_Podcast,
 }
 
-var contentServiceAvailabilityTypeToApiServiceMap = map[contentserviceapi.ContentAvailabilityType]apigateway.ContentAvailabilityType{
+var contentServiceAvailabilityTypeToAPIServiceMap = map[contentserviceapi.ContentAvailabilityType]apigateway.ContentAvailabilityType{
 	contentserviceapi.ContentAvailabilityType_Public:  apigateway.ContentAvailabilityType_Public,
 	contentserviceapi.ContentAvailabilityType_Private: apigateway.ContentAvailabilityType_Private,
 }
